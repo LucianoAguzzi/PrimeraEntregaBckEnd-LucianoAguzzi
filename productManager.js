@@ -1,30 +1,59 @@
+const fs = require('fs');
+
 class ProductManager{
 
     #precioBaseDeGanancia;
+    newIdentifier = 0;
 
-    constructor(){
-        this.products =[];
-        this.newIdentifier=0;
+    constructor(path, precioBaseDeGanancia){
+        this.products = this.loadProducts();
+        this.#precioBaseDeGanancia = precioBaseDeGanancia;
+        this.path=path;
+        this.products= this.getProducts();
     }
 
- 
+    loadProducts() {
+        try {
+          const data = fs.readFileSync(this.path, 'utf8');
+          return JSON.parse(data);
+        } catch (error) {
+          console.error('Error al cargar los productos:', error);
+          return {};
+        }
+      }
+    
+      saveProducts() {
+        try {
+          const data = JSON.stringify(this.products, null, 2);
+          fs.writeFileSync(this.path, data, 'utf8');
+        } catch (error) {
+          console.error('Error al guardar los productos:', error);
+        }
+      }
 
     getProducts = () =>{
-        return this.products;
+      const products = fs.readFileSync('./products.json');
+      return JSON.parse(products);
     }
 
  
 
     addProducts = (title, price, stock, barcode, thumbnail, description) =>{
-        if (title ||price ||stock|| barcode||thumbnail||description) {
+        if (!title ||!price ||!stock|| !barcode||!thumbnail||!description) {
             console.log('All fields are required');
         }   else{
             const barCodeRepeated = this.products.find((product) => product.barcode === barcode);
             if (barCodeRepeated) {
                 console.log(`barcode: ${barcode} already exists`);
-            } else{
+              } else {
+                let maxId = 0;
+                this.products.forEach((product) => {
+                    if (product.id > maxId) {
+                        maxId = product.id;
+                    }
+                });
         const product = {
-            id: this.generateId()+1,
+            id: this.products.reduce((maxId, product) => Math.max(maxId, product.id), 0) + 1,
             title: title,
             price: price+ this.#precioBaseDeGanancia,
             stock: stock,
@@ -32,24 +61,53 @@ class ProductManager{
             thumbnail: thumbnail,
             description: description,
         }
-        this.products.push(product);
+        const id = this.getNextId();
+        const newProduct = {...product,id}
+        this.products.push(newProduct);
+        this.saveProducts();
             }}
     }
     generateId() {
-        return this.newIdentifier
+      this.newIdentifier += 1;
+      return this.newIdentifier;
+  }
+  updateProduct = (productId, updatedFields) => {
+    const productIndex = this.products.findIndex(product => product.id === productId)
+    if (productIndex !== -1) {
+      const updatedProduct = { ...this.products[productIndex], ...updatedFields };
+      this.products[productIndex] = updatedProduct;
+      
+      fs.writeFileSync(this.filename, JSON.stringify(this.products));
+      console.log(`Product with id ${productId} updated successfully.`);
+    } else {
+      console.log(`Product with id ${productId} not found.`);
     }
- 
+  };
+  deleteProduct(id) {
+    const products = this.getProducts();
+
+    const index = products.findIndex((product) => product.id === id);
+    if (index !== -1) {
+      products.splice(index, 1);
+      fs.writeFileSync('./products.json', JSON.stringify(products));
+      console.log(`Product with id ${id} has been deleted.`);
+    } else {
+      console.log(`Product with id ${id} not found.`);
+    }
+  }
+}
+module.exports = Products;
 
    getProductById = (searchId) =>{
     const search = this.products.find(idproducts => idproducts.id === searchId);
     if (search) {
-        console.log(search)
+        return(search)
     }else{
         console.log("No product found");
     }
     }
 
-}
+
 
 const getProducts = new ProductManager();
 console.log(getProducts.products);
@@ -63,3 +121,4 @@ getProducts.addProducts ("Scarf", 650, 33,  "https://yourstylejourney.files.word
 
 console.log(getProducts.products);
 getProducts.getProductById()
+
