@@ -10,6 +10,8 @@ class ProductManager{
         this.#precioBaseDeGanancia = precioBaseDeGanancia;
         this.path=path;
         this.products= this.getProducts();
+        this.path = 'products.json';
+        this.products = []
     }
 
     loadProducts() {
@@ -18,7 +20,7 @@ class ProductManager{
           return JSON.parse(data);
         } catch (error) {
           console.error('Error al cargar los productos:', error);
-          return {};
+          return [];
         }
       }
     
@@ -61,7 +63,7 @@ class ProductManager{
             thumbnail: thumbnail,
             description: description,
         }
-        const id = this.getNextId();
+        const id = this.generateId();
         const newProduct = {...product,id}
         this.products.push(newProduct);
         this.saveProducts();
@@ -77,7 +79,7 @@ class ProductManager{
       const updatedProduct = { ...this.products[productIndex], ...updatedFields };
       this.products[productIndex] = updatedProduct;
       
-      fs.writeFileSync(this.filename, JSON.stringify(this.products));
+      fs.writeFileSync(this.path, JSON.stringify(this.products));
       console.log(`Product with id ${productId} updated successfully.`);
     } else {
       console.log(`Product with id ${productId} not found.`);
@@ -95,8 +97,6 @@ class ProductManager{
       console.log(`Product with id ${id} not found.`);
     }
   }
-}
-module.exports = Products;
 
    getProductById = (searchId) =>{
     const search = this.products.find(idproducts => idproducts.id === searchId);
@@ -106,11 +106,13 @@ module.exports = Products;
         console.log("No product found");
     }
     }
-
+  }
 
 
 const getProducts = new ProductManager();
+const productManager = new ProductManager('./products.json');
 console.log(getProducts.products);
+console.log(productManager);
 
 getProducts.addProducts ("Cap", 50, 3, "https://www.sansabacap.com/wp-content/uploads/2018/08/112FP_final.jpg",12315465,"A trucker cap", 1)
 getProducts.addProducts ("Shirt", 60, 8, "https://cdnb.lystit.com/photos/a43d-2013/12/13/21men-red-classic-fit-gingham-shirt-product-1-16147452-3-439533888-normal.jpeg",45674646,"A cool shirt", 2)
@@ -121,4 +123,3 @@ getProducts.addProducts ("Scarf", 650, 33,  "https://yourstylejourney.files.word
 
 console.log(getProducts.products);
 getProducts.getProductById()
-
